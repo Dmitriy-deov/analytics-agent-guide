@@ -17,6 +17,8 @@
 
 [Читать руководство на GitHub Pages](https://dmitriy-deov.github.io/analytics-agent-guide/)
 
+[Презентация выступления — PDF, 22 слайда](https://dmitriy-deov.github.io/analytics-agent-guide/presentation.pdf)
+
 ## Как читать руководство
 
 | Глава | Что вы в ней найдёте |
