@@ -1,0 +1,645 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Практическое руководство по сборке собственной системы аналитики с агентом."><title>Своя система аналитики — руководство</title><style>
+:root{color-scheme:light;--ink:#203334;--muted:#586b6b;--line:#d9e3df;--accent:#12665d;--paper:#fff;--tint:#f2f6f4}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:3px}a:hover{color:#08483f}a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:3px solid #a37825;outline-offset:4px}.skip{position:fixed;left:12px;top:-80px;z-index:3;background:#fff;padding:8px 16px}.skip:focus{top:10px}.sidebar{position:fixed;inset:0 auto 0 0;width:268px;background:var(--tint);border-right:1px solid var(--line);padding:28px 24px;overflow-y:auto}.brand{font-size:19px;font-weight:750;letter-spacing:-.4px;line-height:1.3;margin-bottom:8px}.edition{font-size:12px;color:var(--muted);margin-bottom:26px}.nav-group{margin:22px 0}.nav-chapter{display:block;font-size:14px;font-weight:700;text-decoration:none}.nav-sections{border-left:1px solid var(--line);margin:9px 0 0 2px;padding-left:12px}.nav-sections a{display:block;font-size:12px;line-height:1.5;padding:4px 0;color:var(--muted);text-decoration:none}.nav-sections a:hover{color:var(--accent);text-decoration:underline}main{margin-left:268px;padding:48px 52px 90px}.content{max-width:980px;margin:auto}.chapter{scroll-margin-top:28px;margin-top:80px;padding-top:56px;border-top:2px solid var(--line)}.chapter:first-child{margin-top:0;padding-top:0;border-top:0}h1{font-size:44px;letter-spacing:-1.6px;line-height:1.14;margin:0 0 22px}h2.chapter-title{font-size:36px;letter-spacing:-1px;line-height:1.2;margin:0 0 20px}h2{font-size:27px;letter-spacing:-.55px;line-height:1.3;margin:44px 0 18px}h3{font-size:24px;letter-spacing:-.35px;line-height:1.35;margin:38px 0 15px}h4{font-size:19px;line-height:1.4;margin:28px 0 12px}p{margin:14px 0 20px;max-width:80ch}strong{font-weight:680}blockquote{margin:24px 0 28px;padding:8px 22px;border-left:3px solid var(--accent);background:var(--tint)}blockquote p{margin:10px 0;color:#3b5553}.table-wrap{width:100%;overflow-x:auto;margin:20px 0 28px;border:1px solid var(--line);border-radius:6px}table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.6}th,td{padding:12px 14px;text-align:left;vertical-align:top;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}th:last-child,td:last-child{border-right:0}td:first-child code{white-space:nowrap;overflow-wrap:normal}tbody tr:last-child td{border-bottom:0}th{background:var(--tint);font-size:13px;font-weight:700}tbody tr:nth-child(even){background:#fafcfb}code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}code{background:#edf2ef;padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}pre{line-height:1.6;background:#f2f5f3;border:1px solid #e0e8e3;border-radius:6px;padding:20px;overflow-x:auto;max-width:100%}pre code{background:none;padding:0;overflow-wrap:normal}li{margin:9px 0}ul,ol{padding-left:25px}input[type=checkbox]{accent-color:var(--accent)}hr{border:0;border-top:1px solid var(--line);margin:38px 0}.bottom{color:var(--muted);font-size:13px;margin-top:50px}
+@media(min-width:1700px){main{padding-left:80px;padding-right:80px}}
+@media(max-width:1100px){.sidebar{width:228px;padding:24px 18px}main{margin-left:228px;padding:38px 30px 70px}h1{font-size:38px}table{font-size:13px}}
+@media(max-width:800px){html{scroll-padding-top:14px}.sidebar{position:static;width:auto;border-right:0;border-bottom:1px solid var(--line);padding:22px}.edition{margin:6px 0 12px}.nav-group{display:inline-block;margin:3px 16px 3px 0}.nav-sections{display:none}.nav-chapter{font-size:13px}main{margin:0;padding:30px 22px 60px}h1{font-size:34px;letter-spacing:-1px}h2.chapter-title{font-size:30px}h2{font-size:25px}h3{font-size:23px}.chapter{margin-top:56px;padding-top:36px}th,td{padding:10px}pre{padding:14px;font-size:12px}blockquote{padding:6px 16px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{.sidebar,.skip{display:none}main{margin:0;padding:0}.content{max-width:none}.chapter{break-before:page}pre{white-space:pre-wrap}a{color:inherit}.table-wrap{overflow:visible}h1,h2,h3,h4{break-after:avoid}}
+</style></head><body><a class="skip" href="#content">Перейти к содержанию</a><aside class="sidebar"><div class="brand">Своя система<br>аналитики</div><div class="edition">Практическое руководство</div><nav aria-label="Оглавление"><div class="nav-group"><a class="nav-chapter" href="#overview">Обзор и архитектура</a><div class="nav-sections"><a href="#overview--как-читать-руководство">Как читать руководство</a><a href="#overview--1-что-строим">1. Что строим</a><a href="#overview--2-принципы-от-которых-зависит-результат">2. Принципы, от которых зависит результат</a><a href="#overview--3-маршрут-сборки">3. Маршрут сборки</a><a href="#overview--4-что-передать-агенту-перед-началом">4. Что передать агенту перед началом</a></div></div><div class="nav-group"><a class="nav-chapter" href="#data">Данные и интерфейсы</a><div class="nav-sections"><a href="#data--1-идентификаторы-и-время">1. Идентификаторы и время</a><a href="#data--2-слои-и-сущности">2. Слои и сущности</a><a href="#data--3-приём-событий-и-форм">3. Приём событий и форм</a><a href="#data--4-контракт-записи-поведения">4. Контракт записи поведения</a><a href="#data--5-внешние-источники-и-связи">5. Внешние источники и связи</a><a href="#data--6-денежные-витрины">6. Денежные витрины</a><a href="#data--7-контракт-чтения-для-агента">7. Контракт чтения для агента</a></div></div><div class="nav-group"><a class="nav-chapter" href="#build">Сборка и эксплуатация</a><div class="nav-sections"><a href="#build--подготовка-зафиксируйте-решения">Подготовка: зафиксируйте решения</a><a href="#build--этап-1-браузер-приёмник-и-разбор">Этап 1. Браузер, приёмник и разбор</a><a href="#build--этап-2-записи-плеер-и-свёртка">Этап 2. Записи, плеер и свёртка</a><a href="#build--этап-3-формы-и-crm">Этап 3. Формы и CRM</a><a href="#build--этап-4-звонки">Этап 4. Звонки</a><a href="#build--этап-5-сделки-оплаты-и-расходы">Этап 5. Сделки, оплаты и расходы</a><a href="#build--этап-6-отношения-и-граф">Этап 6. Отношения и граф</a><a href="#build--этап-7-агент-над-данными">Этап 7. Агент над данными</a><a href="#build--этап-8-эксплуатация-и-восстановление">Этап 8. Эксплуатация и восстановление</a></div></div><div class="nav-group"><a class="nav-chapter" href="#acceptance">Приёмка</a><div class="nav-sections"><a href="#acceptance--1-контрольный-набор">1. Контрольный набор</a><a href="#acceptance--2-сквозной-прогон">2. Сквозной прогон</a><a href="#acceptance--3-контрольные-sql-запросы">3. Контрольные SQL-запросы</a><a href="#acceptance--4-матрица-отказов">4. Матрица отказов</a><a href="#acceptance--5-когда-принимать-результат">5. Когда принимать результат</a></div></div></nav></aside><main id="content"><div class="content"><section class="chapter" id="overview" aria-label="Обзор и архитектура"><h1 class="chapter-title" id="overview--своя-система-аналитики">Своя система аналитики</h1>
+<p><strong>Практическое руководство для технического аналитика и агента разработки</strong></p>
+<p>Посетитель → обращение → лид → сделка → оплата. Поведение на сайте,
+записи сессий, звонки и рекламные расходы дополняют эту цепочку, а агент
+отвечает на вопросы по проверяемым данным.</p>
+<blockquote>
+<p><strong>Для кого:</strong> вы знаете SQL, понимаете HTTP API и можете с агентом
+развернуть приложение на сервере.</p>
+<p><strong>Результат:</strong> собственная система сбора, сверки и анализа данных —
+от события браузера до подтверждённой оплаты.</p>
+<p><strong>Формат:</strong> архитектура, учебные контракты, восемь заданий на разработку
+и проверяемая приёмка. Готового приложения в этом комплекте нет.</p>
+</blockquote>
+<h2 id="overview--как-читать-руководство">Как читать руководство</h2>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Глава</th><th scope="col">Что вы в ней найдёте</th></tr></thead><tbody><tr><td><strong>Эта страница</strong></td><td>Состав системы, принципы и порядок работ.</td></tr><tr><td><a href="#data">Данные и интерфейсы</a></td><td>Ключи, сущности, HTTP, файлы записей, деньги и ответы инструментов.</td></tr><tr><td><a href="#build">Сборка и эксплуатация</a></td><td>Подготовку, восемь заданий агенту, первый запуск и обслуживание.</td></tr><tr><td><a href="#acceptance">Приёмка</a></td><td>Контрольный набор, SQL-проверки, тесты отказов и критерии готовности.</td></tr></tbody></table></div><p>Сначала прочитайте обзор и контракты. Затем передавайте агенту по одному
+этапу из главы о сборке и принимайте его по контрольным примерам.
+<strong>Передавайте весь комплект:</strong> отдельная страница не заменяет остальные главы.</p>
+<p>Все имена, адреса, идентификаторы и суммы в примерах вымышлены.
+Названия технологий обозначают предлагаемый стек; они не описывают
+инфраструктуру или текущее состояние какого-либо частного проекта.</p>
+<h2 id="overview--1-что-строим">1. Что строим</h2>
+<p>Система должна отвечать на пять практических вопросов:</p>
+<ol>
+<li>Что посетитель сделал до обращения и сохранилась ли запись сессии?</li>
+<li>Принял ли сайт форму и появился ли соответствующий лид в CRM?</li>
+<li>С каким обращением или посетителем связан звонок и на каком основании?</li>
+<li>Какие сделки и оплаты найдены, какие суммы остались без связи?</li>
+<li>Насколько свежи и полны данные, на которых основан ответ агента?</li>
+</ol>
+<p>«Лид создан», «сделка успешна» и «деньги получены» — разные факты.
+Отдельно определите выручку: это бизнес-показатель, который нельзя
+автоматически приравнивать к сумме сделок или оплат.</p>
+<h3 id="overview--общая-схема">Общая схема</h3>
+<pre><code class="language-text">Browser ---- events / form copy ----&gt; Receiver ----&gt; PostgreSQL: raw
+Site server ---- form result ------&gt; Receiver ----------^
+External APIs ---&gt; Connectors --------------------------^
+
+Browser ---- rrweb batches --------&gt; Durable buffer ---&gt; S3 + catalog
+                                          |
+                         raw + files ---&gt; Parse / Fold
+                                               |
+                                      Entities + Relations
+                                       |               |
+                                    SQL views        Neo4j
+                                       +-------+-------+
+                                               |
+                                      Read tools ---&gt; Agent
+
+Site server ---- normal delivery --------------------&gt; CRM
+               (independent of analytics)
+</code></pre>
+<p>Аналитика получает копии и результаты. Штатная форма и доставка в CRM
+продолжают работать при недоступности аналитики. Приёмник сохраняет
+данные быстро; сетевые загрузки, разбор DOM и отчёты выполняются отдельно.</p>
+<h3 id="overview--базовый-стек">Базовый стек</h3>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Компонент</th><th scope="col">Предлагаемый инструмент</th><th scope="col">Назначение</th></tr></thead><tbody><tr><td>HTTP-приёмник</td><td>Python, FastAPI, psycopg</td><td>Проверка доступа, сохранение конвертов и подтверждение приёма.</td></tr><tr><td>Основное хранилище</td><td>PostgreSQL, JSONB</td><td>Сырьё, типизированные сущности, отношения, курсоры и SQL-витрины.</td></tr><tr><td>Загрузчики и фоновые задачи</td><td>Python</td><td>Опрос API, разбор, сверка, пересчёт и история запусков.</td></tr><tr><td>Запись поведения</td><td>rrweb</td><td>Снимки DOM и изменения для воспроизведения сессии.</td></tr><tr><td>Файлы записей</td><td>NDJSON, zstd, закрытый S3</td><td>Потоковый архив; в PostgreSQL остаётся каталог файлов.</td></tr><tr><td>Плеер</td><td>Совместимый rrweb-player</td><td>Просмотр записей через защищённый интерфейс.</td></tr><tr><td>Граф</td><td>Neo4j</td><td>Поиск и объяснение путей между подготовленными сущностями.</td></tr><tr><td>Инструменты агента</td><td>Ограниченные SQL/граф-инструменты, например MCP</td><td>Чтение данных с лимитами, происхождением и признаками неполноты.</td></tr><tr><td>Развёртывание</td><td>Docker Compose, Caddy, планировщик</td><td>Повторяемый запуск, HTTPS, фоновые задания и наблюдение.</td></tr></tbody></table></div><p>Стек можно заменить, сохранив контракты. Для пилота достаточно одного
+приложения с отдельными командами и ролями; отдельный сервис на каждую
+операцию не нужен. PostgreSQL остаётся источником подготовленных данных,
+граф — восстанавливаемой проекцией. Начните без отдельного брокера:
+очередью событий может служить таблица сырья.</p>
+<p>Версии библиотек, образы и методы API агент проверяет по официальной
+документации при реализации и фиксирует в зависимостях. Таблица не задаёт
+готовый совместимый набор версий.</p>
+<h2 id="overview--2-принципы-от-которых-зависит-результат">2. Принципы, от которых зависит результат</h2>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Принцип</th><th scope="col">Следствие для собственной реализации</th></tr></thead><tbody><tr><td>Сначала разрешённое сырьё, затем преобразования</td><td>Сохраняйте принятый очищенный конверт и ссылку на него из сущности. Чувствительные значения удаляйте до передачи.</td></tr><tr><td>Повторная доставка безопасна</td><td>ID создаётся один раз; уникальные ключи и транзакции предотвращают дубли.</td></tr><tr><td>Три точки обращения</td><td>Копия браузера, итог сайта и объект CRM сверяются независимо.</td></tr><tr><td>Любая связь объяснима</td><td>Хранятся основание, уверенность, версия правила и ссылки на источники.</td></tr><tr><td>Пробелы видимы</td><td>Отсутствующий источник, устаревший опрос, неоднозначная связь и нулевой результат различаются.</td></tr><tr><td>Деньги сверяются до атрибуции</td><td>Общая сумма платежей не меняется из-за присоединения расходов, звонков или обращений.</td></tr><tr><td>Производные данные пересобираются</td><td>События записи, текст, отношения, витрины и граф имеют версию и перечень входов.</td></tr><tr><td>Агент получает ограниченное чтение</td><td>Права задаются в хранилище; инструмент сообщает свежесть, покрытие и усечение.</td></tr></tbody></table></div><p>Точные правила поиска совпадений, сроки ожидания и параметры нагрузочных
+лимитов выбирает владелец собственной системы. Они должны быть записаны
+в конфигурации и проверены на своих данных. В пилоте опирайтесь на явные
+ID; спорные совпадения оставляйте кандидатами.</p>
+<h2 id="overview--3-маршрут-сборки">3. Маршрут сборки</h2>
+<p><strong>Подготовка предшествует всем этапам.</strong> Базу, роли, миграции и постоянные
+тома поднимите до первого события. Этап 8 завершает эксплуатационную
+готовность, а не откладывает инфраструктуру на конец.</p>
+<pre><code class="language-text">Preparation -&gt; 1. Events -&gt; 2. Recordings -&gt; 3. Forms + CRM
+                                              |
+                            4. Calls -&gt; 5. Money -&gt; 6. Graph
+                                                       |
+                                                7. Agent
+                                                       |
+                                                8. Operations
+                                                       |
+                                               End-to-end check
+</code></pre>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Этап</th><th scope="col">Контрольный результат</th></tr></thead><tbody><tr><td><a href="#build--подготовка-зафиксируйте-решения">Подготовка</a></td><td>Спецификация пилота, имитации источников, окружение и миграции.</td></tr><tr><td><a href="#build--этап-1-браузер-приёмник-и-разбор">1. События</a></td><td>Одно событие проходит от браузера до SQL; повтор не удваивает его.</td></tr><tr><td><a href="#build--этап-2-записи-плеер-и-свёртка">2. Записи</a></td><td>Сессия воспроизводится; действия и текст связаны с файлами.</td></tr><tr><td><a href="#build--этап-3-формы-и-crm">3. Формы и CRM</a></td><td>Одно обращение прослеживается по трём точкам.</td></tr><tr><td><a href="#build--этап-4-звонки">4. Звонки</a></td><td>Звонок загружен; связь с посетителем подтверждена либо отсутствует явно.</td></tr><tr><td><a href="#build--этап-5-сделки-оплаты-и-расходы">5. Деньги</a></td><td>Оплаты и расходы сходятся с источниками; несвязанные суммы видны.</td></tr><tr><td><a href="#build--этап-6-отношения-и-граф">6. Граф</a></td><td>Путь до оплаты объясним и совпадает с контрольным SQL.</td></tr><tr><td><a href="#build--этап-7-агент-над-данными">7. Агент</a></td><td>Ответ подтверждён данными и сообщает ограничения.</td></tr><tr><td><a href="#build--этап-8-эксплуатация-и-восстановление">8. Эксплуатация</a></td><td>Запуск, наблюдение, резервирование и восстановление проверены.</td></tr></tbody></table></div><p>Сначала пройдите маршрут с имитациями API. Затем заменяйте их реальными
+адаптерами по одному и повторяйте приёмку. Если источник недоступен,
+показывайте «не подключён»; нулевые расходы или оплаты из этого не следуют.</p>
+<h2 id="overview--4-что-передать-агенту-перед-началом">4. Что передать агенту перед началом</h2>
+<p>Скопируйте задание вместе с тремя главами:</p>
+<blockquote>
+<p>Собери собственную систему по этому комплекту документации.
+Сначала подготовь спецификацию пилота и карту доступных источников.
+Зафиксируй свои решения о версиях, полях, нагрузке и сроках хранения.
+Реализуй этапы последовательно, сначала на синтетических данных.
+После каждого этапа покажи миграции, контракты, команду проверки и её
+фактический результат. Не считай имитацию API проверенной интеграцией.
+Не заменяй отсутствующие данные нулём и не придумывай связи.
+Не переноси реальные контакты, секреты и инфраструктурные реквизиты
+в документацию, фикстуры или журналы. Запись в CRM не входит в задачу.</p>
+</blockquote>
+<p>Названия файлов, таблиц и маршрутов далее — согласованный учебный
+контракт для создаваемой реализации. Их можно изменить совместно,
+обновив все зависимые части и проверки.</p>
+<hr>
+<p><strong>Далее:</strong> <a href="#data">Данные и интерфейсы →</a></p>
+</section><section class="chapter" id="data" aria-label="Данные и интерфейсы"><h2 class="chapter-title" id="data--данные-и-интерфейсы">Данные и интерфейсы</h2>
+<p><a href="#overview">Обзор</a> · <a href="#build">Сборка</a> · <a href="#acceptance">Приёмка</a></p>
+<p><strong>Назначение главы:</strong> определить, что передают друг другу компоненты.
+Это учебный контракт собственной реализации, а не копия схемы частного проекта.</p>
+<p><strong>В этой главе:</strong> <a href="#data--1-идентификаторы-и-время">ключи</a> ·
+<a href="#data--2-слои-и-сущности">хранилище</a> · <a href="#data--3-приём-событий-и-форм">HTTP</a> ·
+<a href="#data--4-контракт-записи-поведения">записи</a> · <a href="#data--5-внешние-источники-и-связи">источники</a> ·
+<a href="#data--6-денежные-витрины">деньги</a> · <a href="#data--7-контракт-чтения-для-агента">инструменты</a></p>
+<h3 id="data--1-идентификаторы-и-время">1. Идентификаторы и время</h3>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Идентификатор</th><th scope="col">Область уникальности и смысл</th></tr></thead><tbody><tr><td><code>site</code></td><td>Сайт в своей системе. Приёмник определяет его по ключу доступа.</td></tr><tr><td><code>source</code></td><td>Система <strong>и аккаунт</strong> источника: например, <code>crm_demo</code> или <code>finance_demo</code>.</td></tr><tr><td><code>visitor_id</code></td><td>Браузер в области cookie. Это не подтверждённый человек и не сквозной ID всех устройств.</td></tr><tr><td><code>session_id</code></td><td>Сессия внутри сайта; объединяет события, формы и записи.</td></tr><tr><td><code>stream_id</code></td><td>Отдельный поток страницы или вкладки внутри сессии; устраняет коллизии локальной нумерации.</td></tr><tr><td><code>request_id</code></td><td>Одно обращение. Передаётся в форме, серверном результате и отдельном поле CRM.</td></tr><tr><td><code>msg_id</code></td><td>Одно сообщение. Создаётся до отправки и сохраняется при повторах.</td></tr><tr><td><code>batch_id</code></td><td>Одна неизменяемая пачка записи; сохраняется при повторной доставке.</td></tr><tr><td>Внешний ID</td><td>ID объекта вместе с <code>source</code>; одинаковые номера разных аккаунтов не склеиваются.</td></tr></tbody></table></div><p>Внутренние ID создавайте устойчивым генератором, например UUID.
+<code>request_id</code> не равен <code>msg_id</code>: одно обращение порождает несколько сообщений.
+Новое самостоятельное обращение получает новый <code>request_id</code>; повтор доставки
+прежней попытки сохраняет старый. Сервер валидирует ID и при необходимости
+выдаёт его сам, возвращая фактическое значение в ответе формы.</p>
+<p>Для собственной реализации зафиксируйте правила начала/окончания сессии,
+совместного использования ID вкладками и работы без хранилища браузера.
+При отказе cookie допускается <code>visitor_id = NULL</code>, при невозможности
+сохранить сессию — новая локальная сессия с признаком ограниченного покрытия.
+Пустой ID можно дополнить; два разных непустых ID нельзя молча заменить
+один другим. Независимые домены не получают общую cookie автоматически.</p>
+<p><strong>Время:</strong> <code>client_ts</code> — действие в браузере, <code>sent_at</code> — первая отправка,
+<code>received_at</code> — приём сервером, <code>modified_at</code> — изменение внешнего объекта.
+Храните их раздельно как время с часовым поясом; для обмена используйте UTC.
+В отчётах задавайте часовой пояс и полуоткрытый интервал <code>[from, to)</code>.
+Порядок внутри потока уточняет <code>seq</code>; несколько вкладок не образуют
+идеально упорядоченную единую шкалу. Сроки серверной доставки нельзя
+измерять только по часам браузера.</p>
+<h3 id="data--2-слои-и-сущности">2. Слои и сущности</h3>
+<h4 id="data--три-слоя-хранения">Три слоя хранения</h4>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Слой</th><th scope="col">Содержимое</th><th scope="col">Обязательная трассировка</th></tr></thead><tbody><tr><td>Сырьё</td><td>Разрешённый очищенный JSON, метаданные приёма, версии внешних объектов.</td><td>Источник, ключ сообщения/объекта, время, версия формата и состояние разбора.</td></tr><tr><td>Сущности</td><td>Типизированные события, обращения, лиды, звонки, сделки, оплаты и расходы.</td><td>Ссылка на сырьё и версия преобразования.</td></tr><tr><td>Производные данные</td><td>Свёртка записи, текст, отношения, граф и витрины.</td><td>Версия построения, входные объекты/файлы и отметка актуальности.</td></tr></tbody></table></div><p>Сырьё означает «то, что разрешено принять», а не полную копию всех полей.
+До передачи удаляйте секреты, значения ввода и лишние контакты; применяйте
+списки разрешённых параметров URL, свойств событий и полей форм.
+Загрузчики очищают ответы внешних API до сохранения в сырьё.
+Сохраняйте исходный <strong>очищенный</strong> URL рядом с нормализованным. Fragment,
+query, заголовки, текст DOM и сообщения ошибок тоже могут содержать данные.</p>
+<h4 id="data--минимальная-логическая-модель">Минимальная логическая модель</h4>
+<p><code>?</code> обозначает необязательное поле. Стрелки и ключи связи не обещают 1:1.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Сущность</th><th scope="col">Ключ</th><th scope="col">Поля и назначение</th></tr></thead><tbody><tr><td><code>session</code></td><td><code>(site, session_id)</code></td><td><code>visitor_id?</code>, начало/последнее действие, очищенный входной URL и метки источника.</td></tr><tr><td><code>event</code></td><td><code>(site, event_id)</code></td><td><code>session_id</code>, <code>stream_id</code>, <code>seq</code>, <code>name</code>, <code>client_ts</code>, <code>raw_id</code>.</td></tr><tr><td><code>request</code></td><td><code>(site, request_id)</code></td><td><code>session_id?</code>, <code>form_id</code>, ссылки на копию и серверные результаты.</td></tr><tr><td><code>crm_lead</code></td><td><code>(source, lead_id)</code></td><td><code>site?</code>, <code>request_id?</code>, <code>modified_at</code>, <code>raw_id</code>.</td></tr><tr><td><code>call</code></td><td><code>(source, call_id)</code></td><td>Время, результат, мосты посетителя/CRM при наличии, <code>raw_id</code>.</td></tr><tr><td><code>deal</code></td><td><code>(source, deal_id)</code></td><td>Стадия, сумма, валюта, время изменения, ссылка на сырьё.</td></tr><tr><td><code>payment</code></td><td><code>(source, payment_id)</code></td><td><code>deal_source?</code>, <code>deal_id?</code>, <code>paid_at</code>, <code>amount</code>, <code>currency</code>, <code>status</code>.</td></tr><tr><td><code>cost</code></td><td><code>(source, report_key, day, channel_key, currency)</code></td><td>Сумма выбранного отчёта; <code>report_key</code> фиксирует фильтры, измерения и часовой пояс.</td></tr><tr><td><code>relation</code></td><td>Устойчивый ключ типа и обоих концов</td><td>Ключи сущностей с их областями, основание, уверенность и версия правила.</td></tr></tbody></table></div><p>Лиды и сделки могут относиться к разным обращениям; храните такие переходы
+в <code>relation</code>, а не одним полем, которое теряет остальные связи.
+У оплаты из учётной системы <code>source</code> может отличаться от CRM: для связи
+со сделкой нужны <strong>оба</strong> поля <code>deal_source</code> и <code>deal_id</code> либо отдельное
+объяснимое отношение. Одного номера сделки недостаточно.</p>
+<pre><code class="language-text">(site, visitor_id) -&gt; (site, session_id) -&gt; (site, request_id)
+                             |                     |
+                      events + files         (source, lead_id)
+                             |                     |
+                      (source, call_id)      (source, deal_id)
+                                                   |
+                                            (source, payment_id)
+</code></pre>
+<p>У сущностей есть собственные строки даже без найденного соседа. Не теряйте
+непривязанные оплаты и звонки из-за <code>INNER JOIN</code>. При допустимой задержке
+загрузки сохраняйте внешний ключ источника как факт и проверяйте отсутствие
+соседа отдельным аудитом; подтверждённое отношение строится после появления
+обоих концов.</p>
+<h4 id="data--служебные-данные">Служебные данные</h4>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Реестр</th><th scope="col">Минимально необходимые сведения</th></tr></thead><tbody><tr><td>Сайты и ключи</td><td>Сайт, разрешённые Origin/виды сообщений, статус ключа; серверные секреты отдельно.</td></tr><tr><td>Входящие сообщения</td><td>Уникальность <code>(site, kind, msg_id)</code>, очищенное тело, <code>new/ok/failed</code>, версия/ошибка разбора.</td></tr><tr><td>Внешние версии</td><td>Источник, вид объекта, внешний ID, версия/хеш содержимого, время приёма.</td></tr><tr><td>Файлы записей</td><td>Сайт, сессия, ключ S3, размер, SHA-256, диапазоны потоков, полнота и срок хранения.</td></tr><tr><td>Запуски и курсоры</td><td>Источник/задача, область окна, начало/конец, статус, счётчики, последний полный курсор.</td></tr><tr><td>Производные результаты</td><td>Версия, перечень входов, время построения, признаки устаревания и неполноты.</td></tr></tbody></table></div><p>Неизвестная версия формата остаётся в сырье со статусом ошибки разбора;
+синтаксически неверный JSON не считается принятым и отражается в отказе.</p>
+<h3 id="data--3-приём-событий-и-форм">3. Приём событий и форм</h3>
+<h4 id="data--маршруты-и-доступ">Маршруты и доступ</h4>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Маршрут</th><th scope="col">Вход / выход</th><th scope="col">Граница доступа</th></tr></thead><tbody><tr><td><code>POST /v1/inbox</code></td><td>Массив сообщений <code>event</code>, <code>form_copy</code>, <code>form_result</code>; результат по каждому элементу.</td><td>Браузерный ключ: первые два вида; серверный секрет: <code>form_result</code>.</td></tr><tr><td><code>POST /v1/rec</code></td><td>Одна пачка записи; <code>accepted</code> или <code>duplicate</code>.</td><td>Ключ сайта, допустимый Origin и включённый флаг записи.</td></tr><tr><td><code>GET /v1/flags</code></td><td>Разрешение записи и версия публичной конфигурации.</td><td>Ключ сайта и Origin; без секретов и внутренних правил.</td></tr><tr><td><code>GET /health</code></td><td>Доступность приёмника.</td><td>Без клиентских данных; подробная свежесть задач доступна служебной роли.</td></tr><tr><td><code>POST /v1/call-hook</code></td><td>Уведомление телефонии.</td><td>Отдельная проверка подлинности по контракту поставщика.</td></tr></tbody></table></div><p>Для учебной реализации используйте <code>Authorization: Bearer &lt;ключ&gt;</code>.
+Ключ выбирает <code>site</code>; поле сайта в теле не позволяет изменить эту область.
+Поддержите браузерный <code>OPTIONS</code>, точный список Origin и нужных заголовков.
+Серверный запрос проверяется отдельным секретом и не требует Origin.</p>
+<p><strong>Браузерный ключ публичен.</strong> CORS и Origin не доказывают подлинность
+посетителя вне браузера. Нужны ограничения частоты, объёма, распаковки
+и наблюдение за мусорным трафиком. Браузерные сообщения сами по себе
+не подтверждают принятие формы или платёж.</p>
+<h4 id="data--тело-запроса-с-одним-событием">Тело запроса с одним событием</h4>
+<pre><code class="language-json">[
+  {
+    &quot;v&quot;: 1,
+    &quot;kind&quot;: &quot;event&quot;,
+    &quot;msg_id&quot;: &quot;ev_demo_01&quot;,
+    &quot;session_id&quot;: &quot;s1&quot;,
+    &quot;visitor_id&quot;: &quot;v1&quot;,
+    &quot;stream_id&quot;: &quot;tab1_page1&quot;,
+    &quot;seq&quot;: 1,
+    &quot;name&quot;: &quot;page_view&quot;,
+    &quot;url&quot;: &quot;https://www.example.com/prices&quot;,
+    &quot;ts&quot;: &quot;2026-11-16T10:00:00Z&quot;,
+    &quot;sent_at&quot;: &quot;2026-11-16T10:00:01Z&quot;
+  }
+]
+</code></pre>
+<p>В этой модели <code>msg_id</code> события становится <code>event_id</code>, <code>ts</code> — <code>client_ts</code>.
+<code>received_at</code> и <code>site</code> добавляет сервер. Версия и <code>kind</code> выбирают разбор.
+Конверт после первой отправки неизменяем; повтор с тем же ключом и другим
+содержимым — конфликт, а не обновление старого действия.</p>
+<p>Для всех видов нужны <code>v</code>, <code>kind</code>, <code>msg_id</code>, <code>ts</code>, <code>sent_at</code>.
+Дополнительные поля:</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Вид</th><th scope="col">Обязательные поля</th><th scope="col">Необязательные сведения</th></tr></thead><tbody><tr><td><code>event</code></td><td><code>session_id</code>, <code>stream_id</code>, <code>seq</code>, <code>name</code>, <code>url</code>.</td><td><code>visitor_id</code>, разрешённые свойства.</td></tr><tr><td><code>form_copy</code></td><td><code>request_id</code>, <code>form_id</code>, <code>url</code>.</td><td><code>session_id</code>, <code>visitor_id</code>, разрешённые поля без контактов в учебном варианте.</td></tr><tr><td><code>form_result</code></td><td><code>request_id</code>, <code>form_id</code>, <code>result</code>: <code>accepted</code> или <code>rejected</code>.</td><td>Машинная причина отказа без значений полей.</td></tr></tbody></table></div><p>Каждая копия и каждый серверный результат имеют собственный <code>msg_id</code>.
+История этих фактов сохраняется; сводная строка <code>request</code> не заменяет её.
+<code>accepted</code> означает решение обработчика сайта, а не создание лида CRM.</p>
+<h4 id="data--подтверждение-и-повтор">Подтверждение и повтор</h4>
+<p>Пример ответа на пачку из трёх элементов: новый, повторный и неверный.
+Индексы начинаются с нуля.</p>
+<pre><code class="language-json">{
+  &quot;accepted&quot;: [0],
+  &quot;duplicate&quot;: [1],
+  &quot;rejected&quot;: [{&quot;i&quot;: 2, &quot;error&quot;: &quot;bad_envelope&quot;}]
+}
+</code></pre>
+<p>Каждый входной индекс появляется ровно в одном списке. Подтверждение
+<code>accepted</code> выдаётся только после надёжного сохранения сырья.
+При разборе сущность и статус <code>ok</code> меняются одной транзакцией.</p>
+<pre><code class="language-text">receive -&gt; validate -&gt; commit raw(new) -&gt; acknowledge
+                              |
+                            parse -&gt; commit entities + raw(ok)
+                              |
+                              +----&gt; raw(failed, reason)
+</code></pre>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Ответ</th><th scope="col">Действие отправителя</th></tr></thead><tbody><tr><td><code>200</code></td><td>Прочитать поэлементный результат. Удалить из outbox только принятые и повторы; постоянные отказы отделить.</td></tr><tr><td><code>400/401/403/415</code></td><td>Исправить данные, доступ или формат; не повторять бесконечно.</td></tr><tr><td><code>413</code></td><td>Уменьшить пачку, сохранив ID элементов. Слишком большой одиночный элемент пометить отказом.</td></tr><tr><td><code>429/503</code>, обрыв сети или потеря ответа</td><td>Повторить неподтверждённые сообщения с прежними ID, паузой и ограниченным возрастом очереди.</td></tr></tbody></table></div><p>Если все элементы отклонены, верните <code>400</code> с тем же форматом ошибок.
+На повтор с изменённым телом верните поэлементный <code>id_conflict</code>;
+для отдельной пачки записи — <code>409</code>. Ограничения очереди и число
+отброшенных сообщений видимы в диагностике. Наличие ID сессии в
+<code>localStorage</code> не заменяет outbox сообщений.</p>
+<h3 id="data--4-контракт-записи-поведения">4. Контракт записи поведения</h3>
+<p>Пачка содержит <code>v</code>, <code>session_id</code>, <code>stream_id</code>, <code>batch_id</code>, диапазон
+<code>seq_from/seq_to</code>, события rrweb и признаки усечения. Порядок и дедупликация
+внутри потока опираются на <code>(stream_id, seq)</code>, не на порядок HTTP-запросов.
+Приёмник проверяет совпадение диапазона с содержимым. Ключ повтора пачки —
+<code>(site, session_id, batch_id)</code>, ключ события записи —
+<code>(site, session_id, stream_id, seq)</code>. Трекер и рекордер ведут отдельные
+последовательности: их номера не смешиваются между типами данных.</p>
+<p>Для каждого потока нужны начальный полный снимок DOM и последующие
+изменения. Дублирующие записи одинакового ключа должны совпадать;
+конфликт отмечается, а не выбирается произвольно.</p>
+<pre><code class="language-text">batch -&gt; durable local buffer -&gt; immutable compressed file -&gt; S3
+                                        |                   |
+                                        +---- register &lt;----+
+                                                |
+                                  verify -&gt; remove local copy
+
+catalog + main + late files -&gt; player / fold -&gt; events + text
+</code></pre>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Артефакт</th><th scope="col">Контракт готовности</th></tr></thead><tbody><tr><td>Буфер</td><td>Подтверждённые пачки переживают перезапуск процесса и контейнера; повтор безопасен.</td></tr><tr><td>Архив</td><td>Версия формата, ID сессии/потоков, события, диапазоны, пропуски и контрольная сумма.</td></tr><tr><td>Каталог</td><td>Файл зарегистрирован после проверки загрузки; ключ и SHA-256 позволяют безопасно повторить шаг.</td></tr><tr><td>Плеер</td><td>Проверяет доступ, размер и распаковку; показывает пропуски, отсутствие снимка и усечение.</td></tr><tr><td>Свёртка</td><td>Время, поток, вид действия, очищенный URL и разрешённое имя элемента; ссылка на файл/позицию.</td></tr><tr><td>Текст сессии</td><td>Объяснимая последовательность производных событий, версия и перечень входных файлов.</td></tr></tbody></table></div><p>Файл и БД не образуют общую транзакцию. Проверьте сбой между записью
+буфера и отметкой приёма, а также между S3 и регистрацией каталога.
+Повтор должен завершить операцию без потери единственной копии.
+Поздние данные создают отдельный неизменяемый файл и помечают прежнюю
+свёртку устаревшей. События и текст нового поколения публикуются согласованно.</p>
+<p>Маскируйте чувствительные узлы, атрибуты и ввод <strong>до записи</strong>. Свёртка
+не восстанавливает введённые значения. Тип и длину ввода сохраняйте,
+только если выбранный безопасный формат позволяет их получить.
+Ошибки JavaScript требуют отдельного обработчика и очистки; сам факт
+подключения rrweb не гарантирует их сбор.</p>
+<p>Запись DOM — не видео. Ресурсы страницы могут измениться; для длительного
+хранения нужно разрешённое архивирование ресурсов или явно ограниченная
+гарантия воспроизведения. Плеер изолируйте от основного приложения:
+скрипты записи и внешние ресурсы не должны получать его привилегии.</p>
+<h3 id="data--5-внешние-источники-и-связи">5. Внешние источники и связи</h3>
+<p>Для каждого адаптера создайте карту полей: внешний путь → учебное поле,
+тип, необязательность и преобразование. Начальная загрузка охватывает
+явный исторический период; последующие — изменения с пагинацией.
+Если API не даёт надёжной метки изменения, адаптер использует повторные
+окна/сверочные снимки и объявляет ограничение покрытия.</p>
+<pre><code class="language-text">last cursor -&gt; bounded window -&gt; all pages -&gt; raw versions -&gt; entities
+                                                               |
+                                                       commit cursor
+failure before completion -&gt; retain old complete cursor -&gt; repeat
+</code></pre>
+<p>Курсор продвигается только за полностью сохранённое и обработанное окно.
+Повтор окна не создаёт неизменённых версий. Нужны повторная загрузка
+изменяемой истории и политика удалений: частичная выборка или отказ
+в правах не доказывают, что все отсутствующие объекты удалены.</p>
+<h4 id="data--метаданные-отношения">Метаданные отношения</h4>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Поле</th><th scope="col">Смысл</th></tr></thead><tbody><tr><td><code>type</code>, <code>from</code>, <code>to</code></td><td>Тип связи и полные ключи обоих концов с сайтом/источником.</td></tr><tr><td><code>basis</code></td><td>Объяснение: явный <code>request_id</code>, внешний CRM-переход, мост поставщика или кандидатное совпадение.</td></tr><tr><td><code>confidence</code></td><td><code>confirmed</code>, <code>candidate</code> или <code>ambiguous</code>; это категории, не вычисленная вероятность.</td></tr><tr><td><code>rule_version</code></td><td>Версия правила своей реализации.</td></tr><tr><td><code>built_at</code>, <code>provenance</code></td><td>Время и ссылки на исходные строки/версии.</td></tr></tbody></table></div><p>Несколько подходящих соседей не превращаются автоматически в один
+подтверждённый. Телефон или близкое время сами по себе не гарантируют
+идентичность посетителя. Подтверждённые пути и кандидатные гипотезы
+разделяйте в витринах и ответах агента.</p>
+<h3 id="data--6-денежные-витрины">6. Денежные витрины</h3>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Набор</th><th scope="col">Одна строка означает</th><th scope="col">Контроль</th></tr></thead><tbody><tr><td>Сделки</td><td>Актуальное состояние одной сделки в одном источнике.</td><td>Сумма и стадия не подменяют оплату.</td></tr><tr><td>Платежи</td><td>Одно денежное движение с устойчивым ID и статусом.</td><td>Связь с CRM не меняет общую сумму; неизвестная сделка допустима.</td></tr><tr><td>Расходы</td><td>Одну строку выбранного отчёта за день, канал и валюту.</td><td>Не суммировать пересекающиеся отчёты по каналам и кампаниям.</td></tr><tr><td>Атрибуция</td><td>Распределение выбранной метрики по каналам.</td><td>Сумма распределённых и нераспределённых денег равна контрольному итогу.</td></tr></tbody></table></div><p>Для учебного набора <code>amount</code> — decimal, валюта обязательна;
+в JSON суммы передаются строками. Учитываются только движения <code>settled</code>.
+Оплата положительна, возврат — отдельное отрицательное движение;
+отменённое движение не входит в итог. Реальные статусы и знаки
+адаптер приводит к этому договору, сохраняя исходную версию.</p>
+<p>Перед соединением задайте детализацию отчёта, временную ось и правило
+канала. В простом пилоте у сделки один подтверждённый канал либо
+<code>unassigned</code>; период оплат определяется <code>paid_at</code>. Для нескольких касаний
+нужно отдельное распределение, сохраняющее общий итог.</p>
+<pre><code class="language-text">payments -&gt; aggregate(day, attributed_channel, currency) --+
+                                                         +-&gt; report
+costs    -&gt; aggregate(day, channel, currency) -------------+
+</code></pre>
+<p>Сначала агрегируйте обе стороны до одинаковых измерений, затем соединяйте
+с сохранением строк, присутствующих только с одной стороны.
+Не соединяйте две оплаты с тремя строками расходов напрямую: получится
+шесть строк и размноженные суммы. Валюты считайте отдельно; пересчёт
+требует самостоятельного источника курса и правила даты.
+Поступления и расходы за один день не доказывают окупаемость когорты.</p>
+<h3 id="data--7-контракт-чтения-для-агента">7. Контракт чтения для агента</h3>
+<p>Предложите ограниченные инструменты: словарь данных, качество/свежесть,
+SQL-чтение витрин, поиск графового пути, события и текст сессии.
+Полные записи доступны отдельному разрешённому инструменту по необходимости.
+Права чтения обеспечиваются БД и графом, а не только текстом инструкции.</p>
+<p>Пример результата инструмента, вернувшего полный учебный итог:</p>
+<pre><code class="language-json">{
+  &quot;data&quot;: [{&quot;currency&quot;: &quot;XXX&quot;, &quot;paid&quot;: &quot;100.00&quot;}],
+  &quot;as_of&quot;: &quot;2026-11-17T01:00:00Z&quot;,
+  &quot;period&quot;: {&quot;from&quot;: &quot;2026-11-16T00:00:00Z&quot;, &quot;to&quot;: &quot;2026-11-17T00:00:00Z&quot;},
+  &quot;timezone&quot;: &quot;UTC&quot;,
+  &quot;row_count&quot;: 1,
+  &quot;truncated&quot;: false,
+  &quot;coverage&quot;: {&quot;payments&quot;: &quot;complete&quot;, &quot;crm&quot;: &quot;complete&quot;},
+  &quot;warnings&quot;: [],
+  &quot;provenance&quot;: [&quot;demo_fixture&quot;]
+}
+</code></pre>
+<p><code>XXX</code> — учебное обозначение без реальной валюты. <code>as_of</code> определяется
+покрытием источников, а не временем вызова инструмента. <code>row_count</code>
+означает число возвращённых строк, а не общий размер выборки.
+Несколько графовых путей могут вести к одному платежу: перед суммированием
+оставляйте одно движение на <code>(source, payment_id)</code>.
+Неполный набор помечается <code>truncated</code>; итог по усечённым строкам
+агент не суммирует как полный. При ошибке возвращается явная ошибка,
+а не пустой успешный набор.</p>
+<p>Каждый ответ агента называет период, определение метрики, свежесть,
+основания связей и ограничения. Содержимое CRM, DOM и файлов считается
+данными и не разрешает команды, смену прав или обход ограничений.</p>
+<hr>
+<p><a href="#overview">← Обзор</a> · <strong>Далее:</strong> <a href="#build">Сборка и эксплуатация →</a></p>
+</section><section class="chapter" id="build" aria-label="Сборка и эксплуатация"><h2 class="chapter-title" id="build--сборка-и-эксплуатация">Сборка и эксплуатация</h2>
+<p><a href="#overview">Обзор</a> · <a href="#data">Контракты</a> · <a href="#acceptance">Приёмка</a></p>
+<p><strong>Назначение главы:</strong> пройти от пустого окружения до работающего пилота.
+В каждом задании указаны цель, ограничения, результат и проверка.
+Спецификации входов и выходов находятся в <a href="#data">контрактах</a>.</p>
+<p><strong>Навигация:</strong> <a href="#build--подготовка-зафиксируйте-решения">подготовка</a> ·
+<a href="#build--этап-1-браузер-приёмник-и-разбор">события</a> ·
+<a href="#build--этап-2-записи-плеер-и-свёртка">записи</a> ·
+<a href="#build--этап-3-формы-и-crm">CRM</a> · <a href="#build--этап-4-звонки">звонки</a> ·
+<a href="#build--этап-5-сделки-оплаты-и-расходы">деньги</a> ·
+<a href="#build--этап-6-отношения-и-граф">граф</a> · <a href="#build--этап-7-агент-над-данными">агент</a> ·
+<a href="#build--этап-8-эксплуатация-и-восстановление">эксплуатация</a></p>
+<h3 id="build--подготовка-зафиксируйте-решения">Подготовка: зафиксируйте решения</h3>
+<p>Начните с тестового сайта, доступа к обработчику формы, отдельного стенда
+и имитаций внешних API. Реальные учётные данные подключайте после
+синтетической приёмки. Заранее определите, какие поля нельзя собирать.</p>
+<h4 id="build--спецификация-пилота">Спецификация пилота</h4>
+<p>Попросите агента создать <code>docs/pilot-spec.md</code> <strong>в новой реализации</strong>.
+Реальные секреты и контакты в этот файл не входят.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Решение</th><th scope="col">Что записать</th></tr></thead><tbody><tr><td>Границы</td><td>Сайты и области источников, доступный исторический период, отсутствующие интеграции.</td></tr><tr><td>Семантика</td><td>Словарь событий, что считается обращением, оплатой и выручкой.</td></tr><tr><td>Идентификаторы</td><td>Начало/окончание сессии, вкладки, cookie, повтор отправки формы и мосты между источниками.</td></tr><tr><td>Источники</td><td>Возможности API, поля связи, пагинация, квоты, статусы, временные зоны и политика изменений.</td></tr><tr><td>Нагрузка</td><td>Ожидаемые события, объём записей, пиковые запросы; по ним — лимиты и ёмкость.</td></tr><tr><td>Данные и доступ</td><td>Разрешённые поля, маскирование DOM/URL, роли, сроки хранения и порядок удаления.</td></tr><tr><td>Надёжность</td><td>Допустимая задержка, потеря данных и время восстановления; критерии свежести.</td></tr><tr><td>Деньги</td><td>Валюты, знаки возвратов, период отчёта, детализация расходов и пилотная атрибуция.</td></tr></tbody></table></div><p>Если владелец ещё не выбрал бизнес-правило, агент выделяет его как открытое
+решение. Пилот может работать с документированным учебным вариантом;
+реальный отчёт не должен молча наследовать этот вариант.</p>
+<h4 id="build--структура-создаваемого-проекта">Структура создаваемого проекта</h4>
+<pre><code class="language-text">analytics/
++-- browser/                  # tracker, outbox, recorder
++-- app/
+|   +-- receiver/             # HTTP, access, validation
+|   +-- parsers/              # raw -&gt; entities
+|   +-- connectors/           # source adapters + cursors
+|   +-- recordings/           # close, fold, player
+|   +-- relations/            # evidence + graph projection
+|   `-- tools/                # restricted reads for agent
++-- sql/
+|   +-- migrations/
+|   `-- views/
++-- tests/
+|   +-- fixtures/
+|   +-- integration/
+|   `-- acceptance/
++-- deploy/                   # compose.yml, .env.example, proxy
+`-- docs/                     # pilot-spec, contracts, runbook
+</code></pre>
+<p>До этапа 1 создайте PostgreSQL, роли, миграции, тома БД/буфера и базовый
+Compose. Служебный запуск миграций отделите от приложения. Это
+минимальная инфраструктура для всего дальнейшего маршрута.</p>
+<h3 id="build--этап-1-браузер-приёмник-и-разбор">Этап 1. Браузер, приёмник и разбор</h3>
+<p><strong>Вход:</strong> спецификация пилота и конверты из главы о контрактах.
+<strong>Выход для следующих этапов:</strong> <code>raw</code>, <code>session</code>, <code>event</code>, доставка и диагностика.</p>
+<p>Начните с <code>page_view</code> и явного события формы. Для каждого имени задайте
+конкретный триггер: попытка отправки не становится автоматически успехом.
+Скрипт должен запускаться один раз; переход внутри SPA учитывается
+отдельно от первой загрузки страницы.</p>
+<p>Событие сначала попадает в ограниченный outbox, затем отправляется.
+Клиент читает ответ по каждому элементу. Уход со страницы — лишь попытка
+дослать хвост, а не гарантия доставки. Сбой аналитики не блокирует сайт.
+При отсутствии разрешения на сбор скрипт не создаёт очередь скрытно.</p>
+<pre><code class="language-text">action -&gt; stable ID -&gt; outbox -&gt; send -&gt; response per item
+                         ^                  |
+                         +---- retry -------+
+                   remove only acknowledged items
+</code></pre>
+<p>Разборщик выбирает необработанные строки с блокировкой, превращает их
+в сущности и фиксирует результат транзакцией. Ошибка одной строки
+не останавливает весь поток. Переразбор имеет версию и не размножает события.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Реализуй миграции, скрипт, outbox, приёмник и разбор <code>page_view</code> и события формы.</td></tr><tr><td><strong>Ограничения</strong></td><td>Разные права приёма/разбора; лимиты тела и распаковки; неизменяемые ID; без ожидания аналитики в форме.</td></tr><tr><td><strong>Результат</strong></td><td>OpenAPI/JSON-схемы, примеры запросов/ответов, связанные строки сырья и сущностей, счётчики отказов/очереди.</td></tr><tr><td><strong>Проверка</strong></td><td>Повтор, потерянный ответ, смешанная пачка, конфликт ID, две вкладки, запрет хранения и остановка разборщика. Число действий не растёт от повторов.</td></tr></tbody></table></div><h3 id="build--этап-2-записи-плеер-и-свёртка">Этап 2. Записи, плеер и свёртка</h3>
+<p><strong>Зависит от:</strong> сессий, доступа и устойчивой доставки этапа 1.
+<strong>Выход:</strong> файлы, каталог, воспроизведение, события и текст сессии.</p>
+<p>Запускайте рекордер по флагам сайта и правилам разрешённого сбора.
+Сначала проверьте маскирование на тестовых секретах в DOM, атрибутах,
+URL и вводе. Не ограничивайтесь полями с типом <code>password</code>.</p>
+<p>Пачки и локальный буфер имеют ограничения размера/возраста. Задача
+закрытия создаёт неизменяемые файлы, проверяет S3 и регистрирует каталог.
+До этого единственная локальная копия не удаляется. Исчерпание диска
+даёт видимую ошибку и неполноту, а не успешное подтверждение потери.</p>
+<p>Плеер объединяет основной и поздние файлы по контракту потоков.
+Свёртка строит клики, прокрутку и разрешённые имена элементов;
+неизвестный элемент остаётся неизвестным. События и текст связываются
+с файлами. Поздняя пачка требует нового поколения свёртки.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Собери рекордер, файловый поток, защищённый плеер и детерминированную свёртку.</td></tr><tr><td><strong>Ограничения</strong></td><td>Маскирование до отправки; закрытый бакет; лимиты памяти/распаковки; без исполнения кода записанной страницы с правами плеера.</td></tr><tr><td><strong>Результат</strong></td><td>Запись контрольной сессии, каталог, события и текст с версиями и признаками полноты; документированный формат архива.</td></tr><tr><td><strong>Проверка</strong></td><td>Две страницы и вкладки, пропуск, поздняя пачка, отсутствие снимка, отказ S3 и падение между файлом и БД. Тестовые секреты отсутствуют во всех артефактах.</td></tr></tbody></table></div><h3 id="build--этап-3-формы-и-crm">Этап 3. Формы и CRM</h3>
+<p><strong>Зависит от:</strong> этапа 1. Запись поведения дополняет сверку, но не является
+обязательным доказательством доставки формы.</p>
+<pre><code class="language-text">Browser ---- request_id=r1 ----&gt; Site server ----&gt; CRM
+   |                                 |             |
+   +-- form_copy                     |             |
+                     form_result &lt;---+             |
+                                  CRM poll &lt;-------+
+
+Analytics: (site, request_id) -&gt; copy + result + lead + evidence
+</code></pre>
+<p>Встройте <code>request_id</code> в штатную отправку, проверьте сервером и передайте
+в отдельное поле CRM. Для нескольких сайтов CRM также должна различать
+сайт или иметь однозначную карту источника; одного клиентского ID мало.
+Серверный результат отправляется независимо с сохранением неподтверждённых
+сообщений. Отказ аналитики не отменяет успешное действие сайта.</p>
+<p>Загрузчик сохраняет версии лидов, затем строит нормализованные строки.
+Для каждой карты полей документируйте типы и отсутствие значений.
+Проверьте создание пользовательских полей и их перенос при конвертации
+лида в сделку на выбранной CRM; это не универсальное поведение API.</p>
+<p>Карточка обращения показывает факты и качество наблюдения раздельно:</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Что видно</th><th scope="col">Корректная интерпретация</th></tr></thead><tbody><tr><td>Итог сайта <code>accepted</code>, лид найден по явному ключу</td><td>Доставка подтверждена в рамках этого основания.</td></tr><tr><td>Итог <code>rejected</code>, лида нет</td><td>Отказ обработчика формы, а не потеря принятого обращения.</td></tr><tr><td>Лид пока не найден</td><td>До проверки покрытия и выбранного срока ожидания вывод откладывается.</td></tr><tr><td>Опрос CRM просрочен или окно не покрыто</td><td>Данных для вывода недостаточно, независимо от времени ожидания.</td></tr><tr><td>Найдено несколько кандидатов или факты противоречат друг другу</td><td>Нужна диагностика; подтверждённая связь не назначается произвольно.</td></tr></tbody></table></div><p>Это смысл состояний, а не подробный алгоритм сопоставления. Точные
+условия и сроки выбираются в собственной реализации.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Реализуй две точки формы, карту CRM, загрузчик с курсором и карточку трёх точек.</td></tr><tr><td><strong>Ограничения</strong></td><td>Серверный секрет только на сервере; аналитическое чтение CRM отделено от штатной записи; сверка не создаёт лиды автоматически.</td></tr><tr><td><strong>Результат</strong></td><td>По <code>request_id</code> видны копия, решение сайта, лид, основания связей и покрытие опроса.</td></tr><tr><td><strong>Проверка</strong></td><td>Принятие/отказ формы, потеря копии, задержка CRM, сбой страницы API, два сайта, изменение лида и повтор окна.</td></tr></tbody></table></div><h3 id="build--этап-4-звонки">Этап 4. Звонки</h3>
+<p><strong>Вход:</strong> вебхук и/или API телефонии, карта аккаунтов и объектов сайта.
+<strong>Выход:</strong> история звонков, контроль покрытия и объяснимые отношения.</p>
+<p>Вебхук даёт оперативное уведомление, API — историю и контроль пропусков,
+если эти возможности доступны у поставщика. Заранее проверьте тариф,
+доступный период истории, типы ID и возможность передать свой параметр.
+Уведомление и строка истории одного звонка не должны стать двумя звонками.</p>
+<p>Если виджет поддерживает <code>visitor_id</code>, передайте его до звонка и
+проверьте возврат в API. Учитывайте сайт, источник и контекст времени.
+Общий телефон даёт кандидатов; без надёжного моста связь может остаться
+неподтверждённой. Если сервис предоставляет только один канал получения,
+объявите это ограничением покрытия.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Подключи доступные каналы, нормализуй звонки и подготовь контроль покрытия.</td></tr><tr><td><strong>Ограничения</strong></td><td>Проверка подлинности вебхука; повторы безопасны; контакты и секреты исключены из журналов; аудио требует отдельного решения.</td></tr><tr><td><strong>Результат</strong></td><td>Звонки с исходными версиями, карта мостов и явные подтверждённые/кандидатные связи.</td></tr><tr><td><strong>Проверка</strong></td><td>Контрольный звонок, повтор, пропущенный вебхук, несовпадающие типы ID и звонок без моста к посетителю.</td></tr></tbody></table></div><h3 id="build--этап-5-сделки-оплаты-и-расходы">Этап 5. Сделки, оплаты и расходы</h3>
+<p><strong>Зависит от:</strong> модели источников, CRM и словаря денежных показателей.
+<strong>Выход:</strong> денежные сущности, витрины и сверка до/после атрибуции.</p>
+<p>Получите сделки и явные переходы из лидов, движения платежей и выбранный
+отчёт расходов. Если оплаты приходят из другой системы, создайте карту
+её ключей к CRM. Не восстанавливайте платёж из стадии сделки.</p>
+<p>История может измениться задним числом: загрузчики должны уметь повторить
+заданный период и отличить исправление версии от нового движения.
+Выберите один непересекающийся отчёт расходов для итогов; детализации
+по кампаниям не добавляются к уже включённому итогу канала.</p>
+<p>Сначала сверяйте суммы с каждым источником по одинаковым фильтрам,
+валютам и временному поясу. Затем применяйте атрибуцию из спецификации.
+Включайте <code>unassigned</code> и оплату без найденной сделки в контрольные суммы.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Подготовь сделки, платежи, расходы и витрины с явной детализацией и словарём показателей.</td></tr><tr><td><strong>Ограничения</strong></td><td>Decimal; валюта обязательна; возвраты и отмены различимы; агрегация до соединения; неопределённая связь не скрывается.</td></tr><tr><td><strong>Результат</strong></td><td>Контрольные итоги источников, оплаты по обращениям и каналам, нераспределённые суммы, описание периода и модели атрибуции.</td></tr><tr><td><strong>Проверка</strong></td><td>Две оплаты одной сделки, возврат, отмена, платёж без сделки, разные валюты, два аккаунта с одинаковым ID и повтор загрузки.</td></tr></tbody></table></div><h3 id="build--этап-6-отношения-и-граф">Этап 6. Отношения и граф</h3>
+<p><strong>Зависит от:</strong> сущностей и отношений в PostgreSQL.
+<strong>Выход:</strong> повторяемая графовая проекция с теми же основаниями связей.</p>
+<pre><code class="language-text">(Visitor) -&gt; (Session) -&gt; (Request) -&gt; (Lead) -&gt; (Deal) -&gt; (Payment)
+                |
+                +------&gt; (Call)
+
+Each edge: scoped keys + basis + confidence + provenance
+</code></pre>
+<p>Узлы различаются типом, сайтом/источником и исходным ID. В Neo4j нужны
+ограничения уникальности; загрузка по устойчивым ключам обновляет узлы
+и отношения. Одинаковый <code>deal_id</code> в разных аккаунтах не сливается.</p>
+<p>Проекция должна удалять или заменять устаревшие отношения после изменения
+источника, а не только дописывать новые. Храните время/поколение загрузки.
+Если граф отстаёт от SQL, инструмент объявляет это; пересоздание графа
+не должно требовать повторного получения всей истории из внешних API.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Собери отношения и проекцию для пути обращения до оплаты и поведения перед ним.</td></tr><tr><td><strong>Ограничения</strong></td><td>Основание, уверенность и источники обязательны; оба конца существуют; гипотезы отделены от подтверждённых путей.</td></tr><tr><td><strong>Результат</strong></td><td>Версия модели, ограничения уникальности, повторяемый экспорт, контрольный путь и сведения о свежести.</td></tr><tr><td><strong>Проверка</strong></td><td>Повторная сборка, изменение/удаление связи, одинаковые ID разных источников и совпадение с SQL-контролем.</td></tr></tbody></table></div><h3 id="build--этап-7-агент-над-данными">Этап 7. Агент над данными</h3>
+<p><strong>Зависит от:</strong> проверенных витрин и качества; для графовых вопросов — этапа 6.
+<strong>Выход:</strong> объяснимые ответы через ограниченные инструменты.</p>
+<pre><code class="language-text">Agent -&gt; tool -&gt; approved views / graph
+           |-- database-enforced read permissions
+           |-- timeout + row/byte limits
+           |-- freshness + coverage + truncated
+           `-- audit without sensitive payloads
+</code></pre>
+<p>Передайте агенту словарь метрик, ключей и связей. В пилоте предпочтительны
+параметризованные инструменты для типовых задач. Если доступен SQL,
+роль читает только разрешённые представления; произвольные функции,
+изменяющие запросы и доступ к секретам запрещены правами хранилища.
+Для Neo4j права чтения задаются отдельно.</p>
+<p>Агент проверяет покрытие источников перед выводом. Строки CRM и сайта
+не являются инструкциями. Усечённая выборка не даёт полного итога:
+для суммы используйте агрегирующий запрос, а не сложение видимого хвоста.
+Журнал фиксирует вызов, длительность и результат без полного содержимого
+чувствительных строк.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Подключи словарь, проверку качества и инструменты SQL/графа/поведения по контракту.</td></tr><tr><td><strong>Ограничения</strong></td><td>Раздельные роли чтения, лимиты времени/строк/байтов, фильтрация полей, сырые записи закрыты по умолчанию.</td></tr><tr><td><strong>Результат</strong></td><td>Ответы на контрольные вопросы с периодом, метрикой, свежестью, происхождением и ограничениями.</td></tr><tr><td><strong>Проверка</strong></td><td>Известная сумма, устаревший источник, неоднозначная связь, усечение, запрещённая запись и команда, спрятанная в тексте CRM.</td></tr></tbody></table></div><h3 id="build--этап-8-эксплуатация-и-восстановление">Этап 8. Эксплуатация и восстановление</h3>
+<p><strong>Зависит от:</strong> базового окружения подготовки и реализованных компонентов.
+<strong>Выход:</strong> повторяемый запуск и подтверждённые процедуры обслуживания.</p>
+<h4 id="build--роли-и-постоянные-данные">Роли и постоянные данные</h4>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Компонент</th><th scope="col">Необходимые права и хранилища</th></tr></thead><tbody><tr><td>Приёмник</td><td>Вставка сырья, отметки пачек, запись буфера; без миграций и внешней записи CRM.</td></tr><tr><td>Разбор/свёртка</td><td>Чтение своих входов, изменение сущностей/статусов; без управления правами.</td></tr><tr><td>Загрузчик</td><td>Чтение своего API; запись своих версий, сущностей и курсоров.</td></tr><tr><td>Экспорт графа</td><td>Чтение подготовленных сущностей/отношений, запись проекции.</td></tr><tr><td>Плеер</td><td>Разрешённые данные сессии и чтение закрытого S3; изолированное воспроизведение.</td></tr><tr><td>Инструменты агента</td><td>Чтение утверждённых витрин и графа; без изменения данных и схемы.</td></tr><tr><td>Миграции</td><td>Отдельная роль владельца и отдельный управляемый запуск.</td></tr></tbody></table></div><p>Постоянные тома нужны БД и буферу; данные графа могут восстанавливаться
+из проекции. Снаружи открыты только необходимые HTTPS-маршруты.
+Плеер, его API и выдача файлов защищены одинаково. Не публикуйте порты
+БД и графа. В репозитории только <code>.env.example</code> с пустыми значениями;
+реальная конфигурация хранится отдельно и не попадает в логи.</p>
+<h4 id="build--первый-запуск">Первый запуск</h4>
+<p>Агент создаёт <code>deploy/compose.yml</code> и описывает точные команды своей
+реализации в <code>docs/runbook.md</code>. Команды ниже — <strong>требуемый интерфейс
+будущей сборки</strong>, а не уже существующие команды этого комплекта.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Порядок</th><th scope="col">Действие</th><th scope="col">Признак готовности</th></tr></thead><tbody><tr><td>1</td><td>Создать тестовую конфигурацию, тома, секреты и закрытый бакет.</td><td>Проверка конфигурации успешна; секреты не напечатаны.</td></tr><tr><td>2</td><td>Запустить <code>postgres</code>, дождаться готовности и выполнить <code>migrate</code>.</td><td>Миграции применены; роли проверены.</td></tr><tr><td>3</td><td>Зарегистрировать сайт <code>demo</code>, ключи и разрешённый Origin.</td><td>Браузерный ключ не принимает серверный результат.</td></tr><tr><td>4</td><td>Запустить <code>receiver</code>, <code>worker</code>, <code>proxy</code>; затем <code>player</code>, <code>neo4j</code>, <code>tools</code> по мере готовности.</td><td>Маршруты доступны; воркер обрабатывает очереди.</td></tr><tr><td>5</td><td>Выполнить <code>seed-demo</code>, затем <code>test-acceptance</code>.</td><td>Контрольный набор из главы приёмки даёт ожидаемые числа.</td></tr><tr><td>6</td><td>Подключать реальные источники по одному.</td><td>Карта полей и сверка каждого API подтверждены отдельным тестом.</td></tr><tr><td>7</td><td>Включить расписания, наблюдение и независимые копии.</td><td>Контрольный сбой обнаружен; восстановление проверено.</td></tr></tbody></table></div><p>Для готовой реализации служебные контейнеры должны поддерживать, например:</p>
+<pre><code class="language-bash">docker compose -f deploy/compose.yml --env-file deploy/.env run --rm migrate
+docker compose -f deploy/compose.yml --env-file deploy/.env run --rm seed-demo
+docker compose -f deploy/compose.yml --env-file deploy/.env run --rm test-acceptance
+</code></pre>
+<p><code>seed-demo</code> работает только на явно обозначенном учебном стенде и
+повторяемо загружает контрольный набор через соответствующие входы.
+<code>test-acceptance</code> ждёт завершения обработки и заканчивается ненулевым
+кодом при нарушении ожиданий. Он проверяет данные и доступы, а не только
+то, что контейнеры запущены.</p>
+<h4 id="build--фоновые-задачи-и-наблюдение">Фоновые задачи и наблюдение</h4>
+<pre><code class="language-text">timer -&gt; acquire task lock -&gt; run(running) -&gt; bounded batches -&gt; run(ok)
+                                    |
+                                    +----&gt; run(failed, reason)
+</code></pre>
+<p>Таймер не заменяет блокировку. После падения повторяемые порции должны
+возобновиться без дублей. Отличайте отсутствие запуска, успех без новых
+строк и ошибку. Задачи разбора, закрытия/свёртки записей, загрузки API,
+перестроения отношений/графа, удаления и резервирования имеют отдельные
+статусы и наблюдаемые границы покрытия.</p>
+<p>Наблюдайте возраст очередей, курсоров и копий, ошибки, диск, буфер,
+доступность S3, отставание графа и долю несвязанных объектов. Пороги
+берутся из спецификации и измеренной нагрузки. Независимая проверка
+должна обнаруживать остановку самого сервера аналитики.</p>
+<h4 id="build--резервирование-и-удаление">Резервирование и удаление</h4>
+<p>Бэкап включает БД, файлы и необходимую конфигурацию; ключи восстановления
+хранятся отдельно. Копия не должна зависеть только от того же диска или
+единственной учётной записи. Зафиксируйте точку восстановления и перечень
+файлов: файлы, пришедшие после снимка БД, могут потребовать сверки каталога.</p>
+<p>Восстановление проверяйте на другом стенде: применить конфигурацию,
+поднять БД, сверить файлы по каталогу, пересобрать производные данные,
+открыть запись, сравнить суммы и права. Успешная команда создания дампа
+сама по себе не доказывает восстанавливаемость.</p>
+<p>Удаление по сроку охватывает сырьё, сущности, файлы, свёртки, граф и
+кэш инструментов. У копий своя политика истечения; восстановление старой
+копии не должно возвращать в рабочую систему уже удалённый набор.
+Проверьте это на учебных ID, не на реальных данных.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Задание агенту</th><th scope="col">Требование</th></tr></thead><tbody><tr><td><strong>Цель</strong></td><td>Заверши окружение, роли, миграции, расписания, наблюдение, копии и удаление по срокам.</td></tr><tr><td><strong>Ограничения</strong></td><td>Независимость копий; секреты вне репозитория; опасные проверки на отдельном стенде; явные границы потери/восстановления.</td></tr><tr><td><strong>Результат</strong></td><td>Runbook с точными командами, схема прав, история задач, протокол восстановления и удаления.</td></tr><tr><td><strong>Проверка</strong></td><td>Пересоздание контейнеров, обрыв задания, отказ API/S3, нехватка буфера, восстановление БД/файлов, повторное удаление и тест запрещённого доступа.</td></tr></tbody></table></div><hr>
+<p><a href="#data">← Данные и интерфейсы</a> · <strong>Далее:</strong> <a href="#acceptance">Приёмка →</a></p>
+</section><section class="chapter" id="acceptance" aria-label="Приёмка"><h2 class="chapter-title" id="acceptance--приёмка-системы">Приёмка системы</h2>
+<p><a href="#overview">Обзор</a> · <a href="#data">Контракты</a> · <a href="#build">Сборка</a></p>
+<p><strong>Назначение главы:</strong> проверить результат на наблюдаемых данных.
+Все сценарии выполняются на отдельном учебном стенде. Проверки реальных
+API проводят дополнительно после подключения каждого источника.</p>
+<p><strong>В этой главе:</strong> <a href="#acceptance--1-контрольный-набор">контрольный набор</a> ·
+<a href="#acceptance--2-сквозной-прогон">порядок проверки</a> · <a href="#acceptance--3-контрольные-sql-запросы">SQL</a> ·
+<a href="#acceptance--4-матрица-отказов">отказы</a> · <a href="#acceptance--5-когда-принимать-результат">готовность</a></p>
+<h3 id="acceptance--1-контрольный-набор">1. Контрольный набор</h3>
+<p>Используйте дату <code>2026-11-16</code>, пояс UTC и учебную валюту <code>XXX</code>.
+Период отчёта: <code>[2026-11-16T00:00:00Z, 2026-11-17T00:00:00Z)</code>.
+Все перечисленные платежи и расходы входят в этот период.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Объект</th><th scope="col">Входные данные</th></tr></thead><tbody><tr><td>Сайт и браузер</td><td>Сайт <code>demo</code>, URL <code>https://www.example.com</code>, посетитель <code>v1</code>, сессия <code>s1</code>.</td></tr><tr><td>Обычные события</td><td>Два <code>page_view</code> для <code>/</code> и <code>/prices</code>, одно <code>form_submit</code>; три разных <code>msg_id</code>.</td></tr><tr><td>Запись</td><td>Два потока страниц с начальными снимками, переход, клик и прокрутка; всё в <code>s1</code>.</td></tr><tr><td>Обращение</td><td><code>request_id=r1</code>, копия формы и серверный <code>accepted</code> с разными <code>msg_id</code>.</td></tr><tr><td>CRM</td><td>Источник <code>crm_demo</code>, лид <code>l1</code> с <code>site=demo</code>, <code>request_id=r1</code>; явный переход к сделке <code>d1</code>.</td></tr><tr><td>Атрибуция пилота</td><td>Сделка <code>crm_demo/d1</code> имеет один подтверждённый канал <code>demo_cpc</code>.</td></tr><tr><td>Оплаты</td><td>Источник <code>finance_demo</code>, платежи <code>p1=40.00</code>, <code>p2=60.00</code>, оба <code>settled</code>, <code>deal_source=crm_demo</code>, <code>deal_id=d1</code>.</td></tr><tr><td>Звонки</td><td>Источник <code>voice_demo</code>: <code>c1</code> с проверенным мостом к <code>demo/v1</code>, <code>c2</code> без моста.</td></tr><tr><td>Расходы</td><td>Источник <code>ads_demo</code>, один отчёт <code>daily_channels</code>: каналы <code>demo_cpc=2.00</code>, <code>demo_email=3.00</code>, <code>demo_other=5.00</code>.</td></tr></tbody></table></div><p><strong>Ожидания после полного разбора:</strong></p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Проверка</th><th scope="col">Ожидаемый результат</th></tr></thead><tbody><tr><td>События и сессии</td><td>3 события, 1 сессия; события разных потоков не конфликтуют.</td></tr><tr><td>Формы и CRM</td><td>1 обращение, 1 лид, 1 сделка; путь <code>r1 → l1 → d1</code> подтверждён.</td></tr><tr><td>Сырьё приёмника</td><td>5 принятых сообщений: 3 события, 1 копия и 1 серверный итог; пачки rrweb учитываются отдельно.</td></tr><tr><td>Оплаты</td><td>2 движения; общий итог <code>100.00 XXX</code>, и столько же по <code>crm_demo/d1</code>.</td></tr><tr><td>Расходы</td><td>3 строки выбранного отчёта, общий итог <code>10.00 XXX</code>; у <code>demo_cpc</code> — <code>2.00 XXX</code>.</td></tr><tr><td>Звонки</td><td>2 звонка; <code>c1</code> связан с посетителем, <code>c2</code> сохранён без выдуманной связи.</td></tr><tr><td>Поведение</td><td>Запись доступна, два потока различимы, действия и текст прослеживаются до файлов.</td></tr><tr><td>Граф и агент</td><td>Подтверждённый путь до двух оплат; контрольный ответ даёт 100, а не сумму сделки.</td></tr></tbody></table></div><p>Число файлов зависит от выбранного закрытия и не является фиксированным
+ожиданием. Проверяются состав потоков, контрольные суммы, воспроизведение
+и полнота. Запись может быть неполной; агент должен объявить это.</p>
+<h4 id="acceptance--независимые-расширения-набора">Независимые расширения набора</h4>
+<p>Каждый сценарий ниже начинается с чистого базового набора, чтобы ожидания
+не зависели от порядка тестов.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Дополнительный вход</th><th scope="col">Ожидание</th></tr></thead><tbody><tr><td>Возврат <code>-20.00</code>, статус <code>settled</code></td><td>Чистые поступления <code>80.00 XXX</code>; видны исходные оплаты и возврат.</td></tr><tr><td>Отменённый платёж <code>20.00</code></td><td>Контрольный итог остаётся <code>100.00 XXX</code>.</td></tr><tr><td>Платёж <code>30.00</code> без найденной сделки</td><td>Общий итог <code>130.00 XXX</code>; <code>100.00</code> связаны, <code>30.00</code> относятся к <code>unassigned</code>.</td></tr><tr><td>Оплата в другой валюте</td><td>Отдельная строка итога; суммы разных валют не складываются.</td></tr><tr><td>Второй CRM-аккаунт с <code>deal_id=d1</code></td><td>Две разные сделки; оплаты не переходят между ними по одному номеру.</td></tr><tr><td>Обращение с серверным <code>rejected</code></td><td>Отказ формы; лид не создаётся системой сверки.</td></tr></tbody></table></div><h3 id="acceptance--2-сквозной-прогон">2. Сквозной прогон</h3>
+<ol>
+<li>Поднимите пустой стенд и примените миграции. Проверьте роли, ключи и Origin.</li>
+<li>Пройдите контрольные страницы через настоящий браузерный скрипт.
+Проверьте сообщения, outbox и запись; одной вставки SQL для этой части мало.</li>
+<li>Отправьте форму через тестовый обработчик. В имитации CRM сначала
+задержите лид, затем верните его с тем же <code>request_id</code>.</li>
+<li>Загрузите сделки, оплаты, звонки и расходы через адаптеры имитаций API.
+Дождитесь завершения окон и обработки сырья.</li>
+<li>Закройте запись, проверьте S3 и плеер, выполните свёртку и экспорт графа.</li>
+<li>Сравните числа из таблицы и SQL ниже с ответами инструментов агента.</li>
+<li>Повторите <strong>те же сообщения с прежними ID</strong> и окна API.
+События, денежные суммы и неизменённые версии не увеличиваются;
+записи запусков и попыток могут увеличиться.</li>
+<li>Выполните независимые расширения и матрицу отказов. Сохраните протокол:
+вход, воздействие, ожидаемый и фактический результат, команду и код завершения.</li>
+</ol>
+<p>Воспроизводимую автоматическую приёмку агент оформляет в <code>test-acceptance</code>.
+Браузерный smoke-тест и тестовые API входят в её описанный сценарий;
+ручные шаги должны быть явно названы. Синтетический прогон подтверждает
+свою реализацию, а не доступность методов и полей реального поставщика.</p>
+<h3 id="acceptance--3-контрольные-sql-запросы">3. Контрольные SQL-запросы</h3>
+<p>Запросы используют учебные имена таблиц из контрактов. Выполняйте их
+после обработки очередей; до этого отсутствие сущности может быть задержкой.</p>
+<h4 id="acceptance--события-без-сессии">События без сессии</h4>
+<pre><code class="language-sql">SELECT e.site, e.session_id, COUNT(*) AS orphan_events
+FROM event AS e
+LEFT JOIN session AS s
+  ON s.site = e.site AND s.session_id = e.session_id
+WHERE s.session_id IS NULL
+GROUP BY e.site, e.session_id;
+</code></pre>
+<p>На базовом наборе результат пустой. В отдельном негативном тесте удалите
+или не создайте соответствующую сессию и убедитесь, что аудит её находит.
+Для реальных данных вывод требует диагностики, а не автоматического удаления.</p>
+<h4 id="acceptance--оплаты-по-сделке-с-учётом-обоих-источников">Оплаты по сделке с учётом обоих источников</h4>
+<pre><code class="language-sql">SELECT source, deal_source, deal_id, currency, SUM(amount) AS paid
+FROM payment
+WHERE status = &#39;settled&#39;
+GROUP BY source, deal_source, deal_id, currency;
+</code></pre>
+<p>Базовый результат: <code>finance_demo / crm_demo / d1 / XXX / 100.00</code>.
+В расширении без сделки запрос также сохраняет группу с пустыми ключами
+CRM; её нельзя терять на последующем соединении.
+Для отчёта за период добавьте фильтр по <code>paid_at</code> с границами из начала главы.</p>
+<h4 id="acceptance--итог-до-присоединения-графа-и-расходов">Итог до присоединения графа и расходов</h4>
+<pre><code class="language-sql">SELECT currency, SUM(amount) AS paid
+FROM payment
+WHERE status = &#39;settled&#39;
+  AND paid_at &gt;= &#39;2026-11-16T00:00:00Z&#39;
+  AND paid_at &lt;  &#39;2026-11-17T00:00:00Z&#39;
+GROUP BY currency;
+</code></pre>
+<p>Сравните эти суммы с итогом витрины по всем каналам, включая <code>unassigned</code>.
+Они должны совпасть. Отдельно сверяйте расходы с выбранным отчётом источника;
+их присоединение не изменяет число платежей и сумму поступлений.</p>
+<h3 id="acceptance--4-матрица-отказов">4. Матрица отказов</h3>
+<p>Для каждой строки проверяются и видимый статус, и фактическое состояние
+хранилища. Успешный HTTP-ответ сам по себе не является приёмкой.</p>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Воздействие</th><th scope="col">Что должно произойти</th></tr></thead><tbody><tr><td>Потерян ответ после сохранения события</td><td>Повтор с тем же ID даёт <code>duplicate</code>; одно событие в сущностях.</td></tr><tr><td>Один ID с другим содержимым</td><td>Явный конфликт; прежний факт не перезаписан.</td></tr><tr><td>Смешанная пачка</td><td>У каждого индекса один исход; годные сохранены, постоянные отказы отделены.</td></tr><tr><td>Чужой Origin, отозванный ключ или серверный вид с браузерным ключом</td><td>Отказ; чужие данные не сохранены в нужной области.</td></tr><tr><td>Превышение тела, распаковки или частоты</td><td>Ограниченный отказ; приложение не расходует неограниченную память и не подтверждает несохранённое.</td></tr><tr><td>Недоступна аналитика при форме</td><td>Штатный обработчик и доставка CRM работают; очереди аналитики ограничены и наблюдаемы.</td></tr><tr><td>Обрыв разбора</td><td>Нет половины транзакции; повтор не создаёт дубликат сущности.</td></tr><tr><td>Сбой после записи буфера, до отметки БД</td><td>Повтор и закрытие не удваивают действия; единственная подтверждённая копия не теряется.</td></tr><tr><td>S3 не отвечает или регистрация каталога прервалась</td><td>Локальная копия остаётся; повтор завершает загрузку/регистрацию без молчаливой перезаписи конфликта.</td></tr><tr><td>Пропуск, поздняя пачка или нет полного снимка</td><td>Неполнота видима; поздние входы делают прежнюю свёртку устаревшей.</td></tr><tr><td>Сбой середины окна API</td><td>Последний полный курсор сохранён; повтор не теряет страницу и не создаёт новые неизменённые версии.</td></tr><tr><td>CRM устарела или после смены прав вернула пусто</td><td>Нет вывода о потере всех заявок или массовом удалении объектов.</td></tr><tr><td>Изменилась подтверждённая связь</td><td>Старое отношение перестало действовать в SQL и графе; поколения и свежесть видны.</td></tr><tr><td>Усечён ответ инструмента</td><td><code>truncated=true</code>; агент не считает видимые строки полным итогом.</td></tr><tr><td>Команда спрятана в CRM/DOM или запрошена запись через read tool</td><td>Команда остаётся данными; хранилище запрещает изменение.</td></tr><tr><td>Секрет помещён в URL, DOM, атрибут и поле формы</td><td>Он отсутствует в переданном сырье, архивах, свёртках, тексте и журналах.</td></tr><tr><td>Потерян основной сервер</td><td>На другом стенде восстановлены БД и файлы; проверены запись, суммы и права.</td></tr><tr><td>Удалён тестовый набор по сроку</td><td>Он недоступен во всех рабочих слоях; после восстановления старой копии применяется политика повторного удаления.</td></tr></tbody></table></div><h3 id="acceptance--5-когда-принимать-результат">5. Когда принимать результат</h3>
+<h4 id="acceptance--три-уровня-готовности">Три уровня готовности</h4>
+<div class="table-wrap" role="region" aria-label="Таблица" tabindex="0"><table><thead><tr><th scope="col">Уровень</th><th scope="col">Что подтверждено</th></tr></thead><tbody><tr><td><strong>Учебная сборка</strong></td><td>Контрольный сценарий и отказы пройдены на имитациях; команды запуска повторяемы.</td></tr><tr><td><strong>Подключённый пилот</strong></td><td>Для каждого реального источника проверены поля, права, покрытие истории, статусы и сверка контрольных сумм.</td></tr><tr><td><strong>Эксплуатационная готовность</strong></td><td>Нагрузка укладывается в выбранные пределы; наблюдение, доступ, удаление и восстановление проверены на стенде.</td></tr></tbody></table></div><p>Не заменяйте один уровень другим: наличие исходного кода не означает
+проверенную интеграцию, а работающий API не доказывает восстановление.</p>
+<h4 id="acceptance--комплект-сдачи-от-агента">Комплект сдачи от агента</h4>
+<ul>
+<li><input disabled="" type="checkbox"> Спецификация пилота и зафиксированные версии зависимостей.</li>
+<li><input disabled="" type="checkbox"> Миграции, роли, карта источников и формальные схемы сообщений.</li>
+<li><input disabled="" type="checkbox"> Конфигурация без секретов, точные команды запуска и <code>runbook</code>.</li>
+<li><input disabled="" type="checkbox"> Синтетические фикстуры и повторяемый сквозной тест с фактическими результатами.</li>
+<li><input disabled="" type="checkbox"> Словарь метрик, детализация витрин и сверка денег до/после атрибуции.</li>
+<li><input disabled="" type="checkbox"> Основания отношений, свежесть проекций и примеры ответов агента.</li>
+<li><input disabled="" type="checkbox"> Протокол проверки маскирования, прав, восстановления и удаления.</li>
+<li><input disabled="" type="checkbox"> Перечень неподключённых источников, ограничений и оставшихся решений.</li>
+</ul>
+<p><strong>Граница руководства:</strong> оно задаёт технический каркас и критерии сборки.
+Агенту предстоит написать приложение, миграции, адаптеры, инструменты и
+тесты. Поля и возможности конкретных API проверяются во время реализации;
+бизнес-определения и допустимые риски принимает владелец своей системы.</p>
+<hr>
+<p><a href="#build">← Сборка и эксплуатация</a> · <a href="#overview">Вернуться к обзору ↑</a></p>
+</section><footer class="bottom">Источник содержания: <a href="https://github.com/Dmitriy-deov/analytics-agent-guide#readme">Markdown-комплект</a> · <a href="https://github.com/Dmitriy-deov/analytics-agent-guide/archive/refs/heads/main.zip">Скачать комплект</a>. Все примеры синтетические.</footer></div></main></body></html>
